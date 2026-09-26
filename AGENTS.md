@@ -29,6 +29,21 @@ The repository Obsidian's community directory points at for the **ERD Editor** p
 - **Commits follow Conventional Commits**, checked on commit-msg: run `pnpm install` once in a fresh clone to install the hook. Subjects are capitalized; header and body lines stay within 100 characters (config-conventional's limits). The root install is separate from the submodule's: `scripts/build.sh` installs inside `erd-editor/`, and CI never installs the root.
 - Nothing here is built into `main`: the plugin folder is `erd-editor/packages/obsidian-plugin/dist`, inside the submodule, and is never committed.
 
+### Build and release
+
+README.md is the plugin's page inside Obsidian's community plugin browser, so it speaks to users only; how to build and release lives here.
+
+```sh
+git clone --recurse-submodules https://github.com/dineug/erd-editor-obsidian-plugin.git
+pnpm install        # the commit-msg hook
+scripts/build.sh    # builds in the submodule; the plugin folder is erd-editor/packages/obsidian-plugin/dist
+```
+
+1. Bump `version` in the package's `manifest.json` (and `versions.json` when `minAppVersion` moves) in the monorepo.
+2. Here, move the submodule to that commit and copy both files to the root: `cp erd-editor/packages/obsidian-plugin/{manifest,versions}.json .`
+3. Push to `main`. The Build workflow checks the copies, builds the plugin and leaves a draft release tagged with the version, `main.js`, `manifest.json` and `styles.css` attached.
+4. Publish the draft. The tag is the bare version (`1.2.3`, no `v`), which is what Obsidian looks for.
+
 ### Testing Requirements
 
 `scripts/build.sh` is the gate. The plugin's checks run in the monorepo, where `pnpm --filter @dineug/erd-editor-obsidian-plugin smoke` drives a real Obsidian on macOS; run it from `erd-editor/` after `scripts/build.sh` to check the exact commit the submodule pins.
