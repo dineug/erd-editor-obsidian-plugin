@@ -124,6 +124,11 @@ still read the diagrams from disk, but it never writes one behind the editor, wh
 would overwrite the change. The [MCP documentation](https://docs.erd-editor.io/docs/mcp/tools)
 lists every tool with its arguments.
 
+Obsidian installed from Flathub runs in a Flatpak sandbox, which the MCP server cannot reach, so
+there the agent always edits the files on disk. Obsidian picks the change up as it picks up any
+change made outside it, and an edit of yours it has not saved yet gives way to the agent's. The
+plugin says so each time the vault opens, until you turn off **Coding agents**.
+
 ### Files outside the vault
 
 The plugin makes no network requests and sends no telemetry. The one connection it accepts is local
@@ -141,7 +146,8 @@ Both are removed when the window closes or Obsidian quits, and when the plugin i
 reload of the window replaces them. A window that starts also removes the ones windows that have
 exited left behind, as the ERD Editor extension for VS Code does in the same folder. With
 **Coding agents** off, the window keeps only the lock file, with no socket, so an agent still knows
-not to write the vault's diagrams behind the editor.
+not to write the vault's diagrams behind the editor. A window in a Flatpak sandbox writes none of
+these files and removes none.
 
 ## Settings
 

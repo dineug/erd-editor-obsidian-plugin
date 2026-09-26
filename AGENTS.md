@@ -46,4 +46,9 @@ scripts/build.sh    # builds in the submodule; the plugin folder is erd-editor/p
 
 ### Testing Requirements
 
-`scripts/build.sh` is the gate. The plugin's checks run in the monorepo, where `pnpm --filter @dineug/erd-editor-obsidian-plugin smoke` drives a real Obsidian on macOS; run it from `erd-editor/` after `scripts/build.sh` to check the exact commit the submodule pins.
+`scripts/build.sh` is the gate. The plugin's checks run in the monorepo, where `pnpm --filter @dineug/erd-editor-obsidian-plugin smoke` drives a real Obsidian on macOS. To check the exact commit the submodule pins, run from `erd-editor/` after `scripts/build.sh`:
+
+```sh
+pnpm exec vp run --filter @dineug/erd-editor-mcp --fail-if-no-match build   # the smoke's coding agent; build.sh builds the plugin only
+pnpm --filter @dineug/erd-editor-obsidian-plugin smoke
+```
