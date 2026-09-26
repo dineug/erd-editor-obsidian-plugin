@@ -1,0 +1,78 @@
+# Builds the plugin from the erd-editor submodule and, on main, leaves a draft release for it.
+# Publishing the draft is the release: its tag is the bare manifest version, which Obsidian
+# looks up for main.js, manifest.json and styles.css.
+
+name: Build
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      # No version argument: pnpm comes from the submodule's packageManager and Node from
+      # its .nvmrc, so the lockfile is always read by the pnpm that wrote it.
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: erd-editor/package.json
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: erd-editor/.nvmrc
+          cache: pnpm
+          cache-dependency-path: erd-editor/pnpm-lock.yaml
+
+      # Fails when the root manifest.json or versions.json is not the package's.
+      - name: Build Plugin
+        run: scripts/build.sh
+
+      - name: Read Version
+        id: version
+        run: echo "version=$(jq -r .version manifest.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Plugin
+        uses: actions/upload-artifact@v7
+        with:
+          name: erd-editor-${{ steps.version.outputs.version }}
+          path: erd-editor/packages/obsidian-plugin/dist/
+
+      # Drafts are not public and are replaced on every push to main. A published release
+      # with this version means the version was not bumped, so no draft is made for it.
+      - name: Create Release Draft
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/releases" \
+            --jq '.[] | select(.draft == true) | .id' \
+            | xargs -I '{}' gh api -X DELETE "repos/$GITHUB_REPOSITORY/releases/{}"
+
+          if gh release view "$VERSION" > /dev/null 2>&1; then
+            echo "$VERSION is already released; bump the manifest version for a new draft."
+            exit 0
+          fi
+
+          dist=erd-editor/packages/obsidian-plugin/dist
+          gh release create "$VERSION" \
+            "$dist/main.js" "$dist/manifest.json" "$dist/styles.css" \
+            --draft \
+            --target "$GITHUB_SHA" \
+            --title "$VERSION" \
+            --notes "Built from erd-editor $(git -C erd-editor rev-parse --short HEAD)."
