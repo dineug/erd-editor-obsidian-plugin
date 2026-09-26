@@ -14,6 +14,9 @@ The repository Obsidian's community directory points at for the **ERD Editor** p
 | `README.md` | Shown on the plugin's page in Obsidian |
 | `scripts/build.sh` | Checks both copies against the submodule, then builds the plugin in it |
 | `.github/workflows/build.yml` | `scripts/build.sh`, the artifact, and on `main` a draft release |
+| `package.json`, `pnpm-lock.yaml` | commitlint alone; the plugin's own dependencies live in the submodule |
+| `commitlint.config.js` | Conventional Commits through `@commitlint/config-conventional`, `subject-case` off as in the monorepo |
+| `.githooks/commit-msg` | Runs commitlint; `pnpm install` points git at `.githooks` through the `prepare` script |
 
 ## For AI Agents
 
@@ -23,6 +26,7 @@ The repository Obsidian's community directory points at for the **ERD Editor** p
 - **`manifest.json` and `versions.json` are copies.** The package's files are the source; `scripts/build.sh` fails when these differ (`cp erd-editor/packages/obsidian-plugin/{manifest,versions}.json .`).
 - **A release is a published GitHub release** whose tag is the bare manifest version (`1.2.3`, no `v`) with `main.js`, `manifest.json` and `styles.css` attached; Obsidian downloads exactly those. The Build workflow replaces the draft on every push to `main` and skips a version already released. Publishing the draft is manual.
 - **The manifest `id` is `erd-editor`** and cannot change once the plugin is in the community directory; it may not contain `obsidian`.
+- **Commits follow Conventional Commits**, checked on commit-msg: run `pnpm install` once in a fresh clone to install the hook. Subjects are capitalized; header and body lines stay within 100 characters (config-conventional's limits). The root install is separate from the submodule's: `scripts/build.sh` installs inside `erd-editor/`, and CI never installs the root.
 - Nothing here is built into `main`: the plugin folder is `erd-editor/packages/obsidian-plugin/dist`, inside the submodule, and is never committed.
 
 ### Testing Requirements

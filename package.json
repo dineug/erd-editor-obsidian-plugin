@@ -1,0 +1,13 @@
+{
+  "name": "erd-editor-obsidian-plugin",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.34.3",
+  "scripts": {
+    "prepare": "git config core.hooksPath .githooks"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.5.3",
+    "@commitlint/config-conventional": "^20.5.3"
+  }
+}

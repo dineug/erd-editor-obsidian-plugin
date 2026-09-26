@@ -1,1 +1,20 @@
 .DS_Store
+node_modules
+
+# The folder opened as an Obsidian vault, to try a build by hand
+.obsidian
+
+# Editor directories
+.idea
+.vscode
+
+# Local agent state
+.omc
+.omx
+.omo
+.playwright-mcp
+.claude/settings.local.json
+
+# Log files
+npm-debug.log*
+pnpm-debug.log*
