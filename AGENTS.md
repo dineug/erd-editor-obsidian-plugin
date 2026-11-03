@@ -11,8 +11,8 @@ The repository Obsidian's community directory points at for the **ERD Editor** p
 | `erd-editor/` | git submodule, the whole monorepo; the plugin is `erd-editor/packages/obsidian-plugin` (see its `AGENTS.md`) |
 | `manifest.json` | Copy of the package's. Obsidian reads it from `main` to learn the latest version |
 | `versions.json` | Copy of the package's. Obsidian reads it when the latest version needs a newer app than the user runs |
-| `README.md` | Shown on the plugin's page in Obsidian |
-| `scripts/build.sh` | Checks both copies against the submodule, then builds the plugin in it |
+| `README.md` | Copy of the package's. Shown on the plugin's page in Obsidian, with the disclosure Obsidian's developer policies require for the files the hub writes outside the vault |
+| `scripts/build.sh` | Checks `manifest.json` and `versions.json` against the submodule's, then builds the plugin in it |
 | `.github/workflows/build.yml` | `scripts/build.sh`, the artifact, and on `main` a draft release |
 | `package.json`, `pnpm-lock.yaml` | commitlint alone; the plugin's own dependencies live in the submodule |
 | `commitlint.config.js` | Conventional Commits through `@commitlint/config-conventional`, `subject-case` off as in the monorepo |
@@ -23,7 +23,7 @@ The repository Obsidian's community directory points at for the **ERD Editor** p
 ### Working In This Directory
 
 - **Check the submodule first.** An empty `erd-editor/` builds nothing: `git submodule update --init`. Change the plugin in the monorepo, then move the submodule here to that commit; a change made inside the submodule's checkout belongs in a monorepo commit.
-- **`manifest.json` and `versions.json` are copies.** The package's files are the source; `scripts/build.sh` fails when these differ (`cp erd-editor/packages/obsidian-plugin/{manifest,versions}.json .`).
+- **`manifest.json`, `versions.json` and `README.md` are copies.** The package's files are the source: change them in the monorepo, then copy them here (`cp erd-editor/packages/obsidian-plugin/{manifest.json,versions.json,README.md} .`). `scripts/build.sh` fails when the first two differ; nothing checks `README.md`, so copy it with them.
 - **A release is a published GitHub release** whose tag is the bare manifest version (`1.2.3`, no `v`) with `main.js`, `manifest.json` and `styles.css` attached; Obsidian downloads exactly those. The Build workflow replaces the draft on every push to `main` and skips a version already released. Publishing the draft is manual.
 - **The manifest `id` is `erd-editor`** and cannot change once the plugin is in the community directory; it may not contain `obsidian`.
 - **Commits follow Conventional Commits**, checked on commit-msg: run `pnpm install` once in a fresh clone to install the hook. Subjects are capitalized; header and body lines stay within 100 characters (config-conventional's limits). The root install is separate from the submodule's: `scripts/build.sh` installs inside `erd-editor/`, and CI never installs the root.
@@ -39,14 +39,14 @@ pnpm install        # the commit-msg hook
 scripts/build.sh    # builds in the submodule; the plugin folder is erd-editor/packages/obsidian-plugin/dist
 ```
 
-1. Bump `version` in the package's `manifest.json` (and `versions.json` when `minAppVersion` moves) in the monorepo.
-2. Here, move the submodule to that commit and copy both files to the root: `cp erd-editor/packages/obsidian-plugin/{manifest,versions}.json .`
-3. Push to `main`. The Build workflow checks the copies, builds the plugin and leaves a draft release tagged with the version, `main.js`, `manifest.json` and `styles.css` attached.
+1. Bump `version` in the package's `manifest.json` and add it to `versions.json` with its `minAppVersion`, in the monorepo.
+2. Here, move the submodule to that commit and copy the three files to the root: `cp erd-editor/packages/obsidian-plugin/{manifest.json,versions.json,README.md} .`
+3. Push to `main`. The Build workflow checks the `manifest.json` and `versions.json` copies, builds the plugin and leaves a draft release tagged with the version, `main.js`, `manifest.json` and `styles.css` attached.
 4. Publish the draft. The tag is the bare version (`1.2.3`, no `v`), which is what Obsidian looks for.
 
 ### Testing Requirements
 
-`scripts/build.sh` is the gate. The plugin's checks run in the monorepo, where `pnpm --filter @dineug/erd-editor-obsidian-plugin smoke` drives a real Obsidian on macOS. To check the exact commit the submodule pins, run from `erd-editor/` after `scripts/build.sh`:
+`scripts/build.sh` is the gate. The plugin's checks run in the monorepo, where `pnpm --filter @dineug/erd-editor-obsidian-plugin smoke` drives a real Obsidian on macOS or Windows. To check the exact commit the submodule pins, run from `erd-editor/` after `scripts/build.sh`:
 
 ```sh
 pnpm exec vp run --filter @dineug/erd-editor-mcp --fail-if-no-match build   # the smoke's coding agent; build.sh builds the plugin only
